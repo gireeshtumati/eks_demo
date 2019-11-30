@@ -2,7 +2,7 @@ pipeline {
    agent any
    parameters {
         string(name:'region', defaultValue: 'us-east-2', description: 'AWS EKS CLUSTER REGION ')
-        string(name: 'instance_role', defaultValue: 'arn:aws:iam::719899497748:role/eks-workers-NodeInstanceRole-W6SMCFL48H8', description: 'Instance Role Arn')
+        string(name: 'instance_role', defaultValue: 'arn:aws:iam::719899497748:role/eks-worker-stack-NodeInstanceRole-1HAV2T06ZKQFY', description: 'Instance Role Arn')
         string(name: 'eks_cluster_name', defaultValue: 'eks_demo', description:'EKS Cluster Name')
 
    }
