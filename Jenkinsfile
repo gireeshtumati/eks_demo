@@ -2,7 +2,7 @@ pipeline {
    agent any
    parameters {
         string(name:'region', defaultValue: 'us-east-2', description: 'AWS EKS CLUSTER REGION ')
-        string(name: 'instance_role', defaultValue: 'arn:aws:iam::719899497748:role/eks-demo-worker-NodeInstanceRole-PEM2N4JO09Y1', description: 'Instance Role Arn')
+        string(name: 'instance_role', defaultValue: 'arn:aws:iam::719899497748:role/eks-workers-NodeInstanceRole-W6SMCFL48H8', description: 'Instance Role Arn')
         string(name: 'eks_cluster_name', defaultValue: 'eks_demo', description:'EKS Cluster Name')
 
    }
@@ -14,18 +14,21 @@ pipeline {
             print params.eks_cluster_name
 
          }
-      }
-       /*stage("Install kubectl") {
+      } 
+      /*stage("Install kubectl") {
          steps {
              sh '''
                 curl -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
                 chmod +x ./kubectl
+                ps -o user= -p $$ | awk '{print $1}'
+                pwd
+                echo $HOME
                 mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$HOME/bin:$PATH
                 echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
                 kubectl version --short --client '''
          }
       } */
-      /*stage("Install aws-iam-authenticator") {
+      /* stage("Install aws-iam-authenticator") {
          steps {
              withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
@@ -39,7 +42,7 @@ pipeline {
                 chmod +x ./aws-iam-authenticator
                 mkdir -p $HOME/bin && cp ./aws-iam-authenticator $HOME/bin/aws-iam-authenticator && export PATH=$HOME/bin:$PATH
                 echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-                aws-iam-authenticator help
+                aws-iam-authenticator --help
                 printenv  '''
                 }
              }
@@ -54,7 +57,8 @@ pipeline {
                 script{
                 def cluster_name = params.eks_cluster_name
                 print cluster_name
-                sh """ aws eks --region ${params.region} update-kubeconfig --name ${cluster_name} """
+                sh """rm ~/.kube/config 
+                aws eks --region ${params.region} update-kubeconfig --name ${cluster_name} """
                 }
               }
           }
@@ -62,8 +66,8 @@ pipeline {
       stage('Checkout EKS DEMO Project') {
           steps {
                git branch: 'master',
-                credentialsId: 'madhuri_git',
-                url: 'https://github.com/madhurikadam/eks_demo.git'
+                credentialsId: 'gireesh_github',
+                url: 'https://github.com/gireeshtumati/eks_demo.git'
                sh "ls -lat"
                sh "pwd"
           }
@@ -77,15 +81,21 @@ pipeline {
                 script{
                 def instance_role = "${params.instance_role}"
                 sh '''
+                   kubectl get nodes 
                    export INSTANCE_ROLE=${instance_role}
+                   printenv
+                   ls -ltr
+                   pwd
+                   rm ~/.kube/aws-auth-cm.yaml
                    cp aws-auth-cm.yaml ~/.kube/aws-auth-cm.yaml
                    kubectl apply -f ~/.kube/aws-auth-cm.yaml
-                   kubectl get svc  '''
+                   kubectl get svc  
+                   kubectl get nodes'''
                 }
               }
           }
       }
-      stage('Deploy Demo APP On EKS Cluser') {
+       stage('Deploy Demo APP On EKS Cluser') {
           steps {
                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
@@ -99,6 +109,6 @@ pipeline {
                     kubectl get svc service-helloworld -o yaml '''
                }
           }
-      }
+      } 
    }
 }
